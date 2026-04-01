@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CityData, getTimeForTimezone } from "@/lib/timezones";
 import { useCityImage } from "@/hooks/useCityImage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,7 +16,6 @@ export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProp
   const time = getTimeForTimezone(city.timezone, use24h);
   const [imgOpacity, setImgOpacity] = useState(0);
 
-  // Fade in image when loaded
   useEffect(() => {
     if (detailImage) {
       setImgOpacity(0);
@@ -55,21 +54,23 @@ export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProp
         <X className="w-4 h-4 text-white" />
       </button>
 
-      {/* City info overlay */}
+      {/* City info overlay with blur */}
       <div
         key={city.id}
         className="absolute bottom-0 left-0 right-0 p-6 md:p-10"
         style={{ animation: "fade-slide-in 0.6s ease-out" }}
       >
-        <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-white">
-          {city.name}
-        </h2>
-        <p className="font-display text-sm md:text-base font-medium text-white/80 mt-1">
-          {city.country}
-        </p>
-        <p className="font-body text-sm md:text-base text-white/60 mt-0.5 tracking-wide">
-          {time.dayOfWeek} · {time.date}
-        </p>
+        <div className="inline-block backdrop-blur-md bg-black/30 rounded-xl px-5 py-3">
+          <h2 className="font-display text-3xl md:text-5xl font-bold tracking-tight text-white">
+            {city.name}
+          </h2>
+          <p className="font-display text-sm md:text-base font-medium text-white/80 mt-1">
+            {city.country}
+          </p>
+          <p className="font-body text-sm md:text-base text-white/60 mt-0.5 tracking-wide">
+            {time.dayOfWeek} · {time.date}
+          </p>
+        </div>
       </div>
     </div>
   );
