@@ -59,44 +59,44 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
 
       <div
         key={city.id}
-        className={`relative z-10 flex items-end gap-2 transition-all duration-500 ease-out md:gap-4 ${
+        className={`relative z-10 flex items-end gap-1 transition-all duration-500 ease-out sm:gap-2 md:gap-4 ${
           animating ? "translate-y-3 opacity-0" : "translate-y-0 opacity-100"
         }`}
         style={{ animation: "fade-slide-in 0.5s ease-out" }}
       >
         <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
+          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
             Hours
           </span>
-          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
+          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
             {time.hours}
           </span>
         </div>
 
-        <span className="select-none pb-1 font-clock text-5xl text-[hsl(var(--clock-separator))] md:pb-4 md:text-8xl">:</span>
+        <span className="select-none pb-0.5 font-clock text-3xl text-[hsl(var(--clock-separator))] sm:text-5xl sm:pb-1 md:pb-4 md:text-8xl">:</span>
 
         <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
+          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
             Minutes
           </span>
-          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
+          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
             {time.minutes}
           </span>
         </div>
 
-        <span className="select-none pb-1 font-clock text-5xl text-[hsl(var(--clock-separator))] md:pb-4 md:text-8xl">:</span>
+        <span className="select-none pb-0.5 font-clock text-3xl text-[hsl(var(--clock-separator))] sm:text-5xl sm:pb-1 md:pb-4 md:text-8xl">:</span>
 
         <div className="flex flex-col items-center">
-          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
+          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
             Seconds
           </span>
-          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
+          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
             {time.seconds}
           </span>
         </div>
 
         {time.period && (
-          <span className="ml-2 pb-2 font-clock text-2xl text-[hsl(var(--clock-label))] md:pb-6 md:text-4xl">
+          <span className="ml-1 pb-1 font-clock text-lg text-[hsl(var(--clock-label))] sm:text-2xl sm:ml-2 sm:pb-2 md:pb-6 md:text-4xl">
             {time.period}
           </span>
         )}
