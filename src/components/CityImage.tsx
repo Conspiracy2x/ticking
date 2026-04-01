@@ -25,7 +25,7 @@ export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProp
   }, [detailImage]);
 
   return (
-    <div className="relative w-full h-[280px] md:h-[400px] overflow-hidden">
+    <div className="relative flex-1 min-h-[220px] overflow-hidden">
       {detailLoading ? (
         <Skeleton className="w-full h-full rounded-none" />
       ) : detailImage ? (
