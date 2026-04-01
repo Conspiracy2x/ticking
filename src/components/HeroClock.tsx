@@ -9,6 +9,27 @@ interface HeroClockProps {
   tick: number;
 }
 
+function ClockDigit({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
+        {label}
+      </span>
+      <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ClockSeparator() {
+  return (
+    <span className="select-none pb-0.5 font-clock text-3xl text-[hsl(var(--clock-separator))] sm:text-5xl sm:pb-1 md:pb-4 md:text-8xl">
+      :
+    </span>
+  );
+}
+
 export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   const time = getTimeForTimezone(city.timezone, use24h);
   const { heroImage, fallbackGradient } = useCityImage(city.name, city.country);
@@ -64,36 +85,11 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
         }`}
         style={{ animation: "fade-slide-in 0.5s ease-out" }}
       >
-        <div className="flex flex-col items-center">
-          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
-            Hours
-          </span>
-          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
-            {time.hours}
-          </span>
-        </div>
-
-        <span className="select-none pb-0.5 font-clock text-3xl text-[hsl(var(--clock-separator))] sm:text-5xl sm:pb-1 md:pb-4 md:text-8xl">:</span>
-
-        <div className="flex flex-col items-center">
-          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
-            Minutes
-          </span>
-          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
-            {time.minutes}
-          </span>
-        </div>
-
-        <span className="select-none pb-0.5 font-clock text-3xl text-[hsl(var(--clock-separator))] sm:text-5xl sm:pb-1 md:pb-4 md:text-8xl">:</span>
-
-        <div className="flex flex-col items-center">
-          <span className="text-[8px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] sm:text-[10px] md:text-xs">
-            Seconds
-          </span>
-          <span className="font-clock text-5xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] sm:text-7xl md:text-[10rem]">
-            {time.seconds}
-          </span>
-        </div>
+        <ClockDigit label="Hours" value={time.hours} />
+        <ClockSeparator />
+        <ClockDigit label="Minutes" value={time.minutes} />
+        <ClockSeparator />
+        <ClockDigit label="Seconds" value={time.seconds} />
 
         {time.period && (
           <span className="ml-1 pb-1 font-clock text-lg text-[hsl(var(--clock-label))] sm:text-2xl sm:ml-2 sm:pb-2 md:pb-6 md:text-4xl">

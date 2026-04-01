@@ -5,6 +5,41 @@ export interface CityData {
   timezone: string;
 }
 
+// --- Formatter cache: avoids recreating Intl objects every second ---
+const timeFormatterCache = new Map<string, Intl.DateTimeFormat>();
+const dateFormatterCache = new Map<string, Intl.DateTimeFormat>();
+
+function getTimeFormatter(timezone: string, use24h: boolean): Intl.DateTimeFormat {
+  const key = `${timezone}|${use24h}`;
+  let fmt = timeFormatterCache.get(key);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: !use24h,
+    });
+    timeFormatterCache.set(key, fmt);
+  }
+  return fmt;
+}
+
+function getDateFormatter(timezone: string): Intl.DateTimeFormat {
+  let fmt = dateFormatterCache.get(timezone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    dateFormatterCache.set(timezone, fmt);
+  }
+  return fmt;
+}
+
 // Curated major cities with proper country names
 const CURATED_CITIES: CityData[] = [
   { id: "new-york", name: "New York", country: "United States", timezone: "America/New_York" },
@@ -149,28 +184,13 @@ export function getTimeForTimezone(
 ): { hours: string; minutes: string; seconds: string; period?: string; dayOfWeek: string; date: string } {
   const now = new Date();
 
-  const timeFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: !use24h,
-  });
+  const timeParts = getTimeFormatter(timezone, use24h).formatToParts(now);
+  const hour = timeParts.find((p) => p.type === "hour")?.value || "00";
+  const minute = timeParts.find((p) => p.type === "minute")?.value || "00";
+  const second = timeParts.find((p) => p.type === "second")?.value || "00";
+  const period = timeParts.find((p) => p.type === "dayPeriod")?.value;
 
-  const parts = timeFormatter.formatToParts(now);
-  const hour = parts.find((p) => p.type === "hour")?.value || "00";
-  const minute = parts.find((p) => p.type === "minute")?.value || "00";
-  const second = parts.find((p) => p.type === "second")?.value || "00";
-  const period = parts.find((p) => p.type === "dayPeriod")?.value;
-
-  const dateFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-  const dateParts = dateFormatter.formatToParts(now);
+  const dateParts = getDateFormatter(timezone).formatToParts(now);
   const dayOfWeek = dateParts.find((p) => p.type === "weekday")?.value || "";
   const month = dateParts.find((p) => p.type === "month")?.value || "";
   const day = dateParts.find((p) => p.type === "day")?.value || "";

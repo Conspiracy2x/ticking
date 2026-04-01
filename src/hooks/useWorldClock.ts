@@ -21,13 +21,8 @@ function loadCities(): CityData[] {
 function loadSettings(): Settings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
-
-    if (!stored) {
-      return { darkMode: true, use24h: false };
-    }
-
+    if (!stored) return { darkMode: true, use24h: false };
     const parsed = JSON.parse(stored);
-
     return {
       darkMode: parsed.darkMode ?? true,
       use24h: parsed.use24h ?? false,
@@ -39,14 +34,15 @@ function loadSettings(): Settings {
 
 export function useWorldClock() {
   const [cities, setCities] = useState<CityData[]>(loadCities);
-  const [primaryIndex, setPrimaryIndex] = useState(0);
+  const [primaryId, setPrimaryId] = useState<string | null>(() => {
+    const loaded = loadCities();
+    return loaded.length > 0 ? loaded[0].id : null;
+  });
   const [settings, setSettings] = useState<Settings>(() => {
     const initialSettings = loadSettings();
-
     if (typeof document !== "undefined") {
       document.documentElement.classList.toggle("dark", initialSettings.darkMode);
     }
-
     return initialSettings;
   });
   const [tick, setTick] = useState(0);
@@ -67,36 +63,35 @@ export function useWorldClock() {
 
   const addCity = useCallback(
     (city: CityData) => {
-      if (cities.length >= 5) return;
-      if (cities.some((c) => c.id === city.id)) return;
-      setCities((prev) => [...prev, city]);
-    },
-    [cities]
-  );
-
-  const removeCity = useCallback(
-    (id: string) => {
       setCities((prev) => {
-        const newCities = prev.filter((c) => c.id !== id);
-        return newCities;
-      });
-      setPrimaryIndex((prev) => {
-        const idx = cities.findIndex((c) => c.id === id);
-        if (idx === prev) return 0;
-        if (idx < prev) return prev - 1;
-        return prev;
+        if (prev.length >= 5) return prev;
+        if (prev.some((c) => c.id === city.id)) return prev;
+        const next = [...prev, city];
+        // If this is the first city, set it as primary
+        if (prev.length === 0) setPrimaryId(city.id);
+        return next;
       });
     },
-    [cities]
+    []
   );
 
-  const setPrimary = useCallback(
-    (id: string) => {
-      const idx = cities.findIndex((c) => c.id === id);
-      if (idx >= 0) setPrimaryIndex(idx);
-    },
-    [cities]
-  );
+  const removeCity = useCallback((id: string) => {
+    setCities((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      // If we removed the primary, reset to the first remaining city
+      setPrimaryId((currentPrimaryId) => {
+        if (currentPrimaryId === id) {
+          return next.length > 0 ? next[0].id : null;
+        }
+        return currentPrimaryId;
+      });
+      return next;
+    });
+  }, []);
+
+  const setPrimary = useCallback((id: string) => {
+    setPrimaryId(id);
+  }, []);
 
   const toggleDarkMode = useCallback(() => {
     setSettings((s) => ({ ...s, darkMode: !s.darkMode }));
@@ -106,8 +101,8 @@ export function useWorldClock() {
     setSettings((s) => ({ ...s, use24h: !s.use24h }));
   }, []);
 
-  const primaryCity = cities.length > 0 ? cities[primaryIndex] || cities[0] : null;
-  const secondaryCities = cities.filter((_, i) => i !== (primaryIndex < cities.length ? primaryIndex : 0));
+  const primaryCity = cities.find((c) => c.id === primaryId) || cities[0] || null;
+  const secondaryCities = cities.filter((c) => c.id !== primaryCity?.id);
 
   return {
     cities,
