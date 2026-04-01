@@ -41,8 +41,8 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
           loading="eager"
           decoding="async"
           onLoad={() => setImageVisible(true)}
-          className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover blur-3xl transition-opacity duration-700"
-          style={{ opacity: imageVisible ? 0.42 : 0 }}
+          className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover transition-opacity duration-700"
+          style={{ opacity: imageVisible ? 0.55 : 0, filter: "blur(12px) saturate(1.2)" }}
         />
       ) : (
         <div
@@ -54,8 +54,8 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
         />
       )}
 
-      <div className="absolute inset-0 bg-[hsl(var(--overlay-bg)/0.28)]" />
-      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.38)]" />
+      {/* Glass overlay */}
+      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.55)] backdrop-blur-sm" />
 
       <div
         key={city.id}
