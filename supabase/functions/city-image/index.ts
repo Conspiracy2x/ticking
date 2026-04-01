@@ -3,16 +3,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SEARCH_QUERIES = (city: string, country?: string): string[] => {
-  const queries = [
-    `${city} skyline`,
-    `${city} downtown cityscape`,
-    `${city} city view`,
-  ];
-  if (country) queries.push(`${city} ${country}`);
-  return queries;
-};
-
 interface ImageResult {
   heroImage: string;
   detailImage: string;
@@ -32,7 +22,6 @@ async function searchUnsplash(
     const data = await res.json();
     const results = data.results;
     if (!results || results.length < 1) return null;
-
     const hero = results[0]?.urls?.regular;
     const detail = results.length > 1 ? results[1]?.urls?.regular : results[0]?.urls?.regular;
     if (!hero) return null;
@@ -55,7 +44,6 @@ async function searchPexels(
     const data = await res.json();
     const photos = data.photos;
     if (!photos || photos.length < 1) return null;
-
     const hero = photos[0]?.src?.landscape || photos[0]?.src?.large2x;
     const detail = photos.length > 1
       ? photos[1]?.src?.landscape || photos[1]?.src?.large2x
@@ -84,29 +72,31 @@ Deno.serve(async (req) => {
     const unsplashKey = Deno.env.get("UNSPLASH_ACCESS_KEY");
     const pexelsKey = Deno.env.get("PEXELS_API_KEY");
 
-    const queries = SEARCH_QUERIES(city, country);
+    // Use a single smart query — "{city} skyline" works for almost all cities
+    const query = `${city} skyline`;
     let result: ImageResult | null = null;
 
-    // Try Unsplash first with each query
-    if (unsplashKey) {
-      for (const q of queries) {
-        const found = await searchUnsplash(q, unsplashKey);
-        if (found) {
-          result = { heroImage: found.hero, detailImage: found.detail, source: "unsplash" };
-          break;
-        }
-      }
+    // Try Unsplash and Pexels in parallel for speed
+    const [unsplashResult, pexelsResult] = await Promise.all([
+      unsplashKey ? searchUnsplash(query, unsplashKey) : Promise.resolve(null),
+      pexelsKey ? searchPexels(query, pexelsKey) : Promise.resolve(null),
+    ]);
+
+    if (unsplashResult) {
+      result = { heroImage: unsplashResult.hero, detailImage: unsplashResult.detail, source: "unsplash" };
+    } else if (pexelsResult) {
+      result = { heroImage: pexelsResult.hero, detailImage: pexelsResult.detail, source: "pexels" };
     }
 
-    // Fallback to Pexels
-    if (!result && pexelsKey) {
-      for (const q of queries) {
-        const found = await searchPexels(q, pexelsKey);
-        if (found) {
-          result = { heroImage: found.hero, detailImage: found.detail, source: "pexels" };
-          break;
-        }
-      }
+    // If no results, try broader query in parallel
+    if (!result) {
+      const fallbackQuery = country ? `${city} ${country}` : `${city} city`;
+      const [u2, p2] = await Promise.all([
+        unsplashKey ? searchUnsplash(fallbackQuery, unsplashKey) : Promise.resolve(null),
+        pexelsKey ? searchPexels(fallbackQuery, pexelsKey) : Promise.resolve(null),
+      ]);
+      if (u2) result = { heroImage: u2.hero, detailImage: u2.detail, source: "unsplash" };
+      else if (p2) result = { heroImage: p2.hero, detailImage: p2.detail, source: "pexels" };
     }
 
     // Premium fallback
