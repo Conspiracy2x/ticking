@@ -1,36 +1,37 @@
 import { useState, useEffect } from "react";
-
-const FALLBACK_GRADIENTS: Record<string, string> = {
-  default: "linear-gradient(135deg, hsl(220, 25%, 12%), hsl(220, 30%, 25%))",
-};
+import { getCityImages } from "@/lib/cityImages";
 
 export function useCityImage(cityName: string | null) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  const [detailImage, setDetailImage] = useState<string | null>(null);
+  const [heroLoading, setHeroLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     if (!cityName) {
-      setImageUrl(null);
+      setHeroImage(null);
+      setDetailImage(null);
       return;
     }
 
-    setLoading(true);
-    // Use Unsplash source (no API key needed)
-    const url = `https://source.unsplash.com/1600x900/?${encodeURIComponent(cityName + " city skyline")}`;
+    const images = getCityImages(cityName);
 
-    const img = new Image();
-    img.onload = () => {
-      setImageUrl(img.src);
-      setLoading(false);
-    };
-    img.onerror = () => {
-      setImageUrl(null);
-      setLoading(false);
-    };
-    img.src = url;
+    // Load hero image
+    setHeroLoading(true);
+    const heroImg = new Image();
+    heroImg.onload = () => { setHeroImage(heroImg.src); setHeroLoading(false); };
+    heroImg.onerror = () => { setHeroImage(null); setHeroLoading(false); };
+    heroImg.src = images.heroImage;
+
+    // Load detail image
+    setDetailLoading(true);
+    const detailImg = new Image();
+    detailImg.onload = () => { setDetailImage(detailImg.src); setDetailLoading(false); };
+    detailImg.onerror = () => { setDetailImage(null); setDetailLoading(false); };
+    detailImg.src = images.detailImage;
   }, [cityName]);
 
-  const fallbackGradient = FALLBACK_GRADIENTS.default;
+  const fallbackGradient = "linear-gradient(135deg, hsl(220, 25%, 12%), hsl(220, 30%, 25%))";
 
-  return { imageUrl, loading, fallbackGradient };
+  return { heroImage, detailImage, heroLoading, detailLoading, fallbackGradient };
 }
