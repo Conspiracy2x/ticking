@@ -22,8 +22,9 @@ async function searchUnsplash(
     const data = await res.json();
     const results = data.results;
     if (!results || results.length < 1) return null;
-    const hero = results[0]?.urls?.regular;
-    const detail = results.length > 1 ? results[1]?.urls?.regular : results[0]?.urls?.regular;
+    const hero = results[0]?.urls?.raw ? `${results[0].urls.raw}&w=1920&h=1080&fit=crop&q=85` : results[0]?.urls?.full;
+    const detailPhoto = results.length > 1 ? results[1] : results[0];
+    const detail = detailPhoto?.urls?.raw ? `${detailPhoto.urls.raw}&w=1600&h=900&fit=crop&q=85` : detailPhoto?.urls?.full;
     if (!hero) return null;
     return { hero, detail: detail || hero };
   } catch {
