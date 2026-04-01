@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { getTimeForTimezone } from "@/lib/timezones";
 import { CityData } from "@/lib/timezones";
+import { useCityImage } from "@/hooks/useCityImage";
 
 interface HeroClockProps {
   city: CityData;
@@ -10,6 +11,7 @@ interface HeroClockProps {
 
 export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   const time = getTimeForTimezone(city.timezone, use24h);
+  const { heroImage } = useCityImage(city.name, city.country);
   const [animating, setAnimating] = useState(false);
   const prevCityRef = useRef(city.id);
 
@@ -24,16 +26,29 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
 
   return (
     <div className="relative flex flex-col items-center justify-center py-10 md:py-16 overflow-hidden transition-colors duration-500">
-      {/* Blue-tinted blurred background */}
+      {/* Blurred city image background */}
+      {heroImage && (
+        <div
+          className="absolute inset-0 transition-opacity duration-1000"
+          style={{
+            backgroundImage: `url(${heroImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            filter: "blur(50px) brightness(0.5) saturate(1.3)",
+            transform: "scale(1.3)",
+            opacity: 0.5,
+          }}
+        />
+      )}
+      {/* Blue tint fallback + overlay for readability */}
       <div
         className="absolute inset-0"
         style={{
           background: "linear-gradient(135deg, hsl(220, 60%, 15%), hsl(210, 50%, 25%), hsl(230, 45%, 20%))",
-          opacity: 0.4,
+          opacity: heroImage ? 0.3 : 0.4,
         }}
       />
-      {/* Surface overlay for readability */}
-      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.75)]" />
+      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.7)]" />
 
       <div
         key={city.id}
