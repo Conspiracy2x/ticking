@@ -45,7 +45,7 @@ async function searchPexels(
     const data = await res.json();
     const photos = data.photos;
     if (!photos || photos.length < 1) return null;
-    const hero = photos[0]?.src?.original || photos[0]?.src?.large2x || photos[0]?.src?.landscape;
+    const hero = photos[0]?.src?.medium || photos[0]?.src?.landscape;
     const detailPhoto = photos.length > 1 ? photos[1] : photos[0];
     const detail = detailPhoto?.src?.original || detailPhoto?.src?.large2x || detailPhoto?.src?.landscape;
     if (!hero) return null;
