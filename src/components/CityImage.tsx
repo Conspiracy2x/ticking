@@ -57,7 +57,7 @@ export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProp
       {/* City info overlay with blur */}
       <div
         key={city.id}
-        className="absolute bottom-0 left-0 right-0 p-6 md:p-10"
+        className="absolute bottom-0 left-0 right-0 px-6 pb-0 pt-6 md:px-10 md:pb-0 md:pt-10"
         style={{ animation: "fade-slide-in 0.6s ease-out" }}
       >
         <div className="inline-block backdrop-blur-md bg-black/30 rounded-xl px-5 py-3">
