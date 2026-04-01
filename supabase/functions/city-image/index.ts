@@ -22,7 +22,7 @@ async function searchUnsplash(
     const data = await res.json();
     const results = data.results;
     if (!results || results.length < 1) return null;
-    const hero = results[0]?.urls?.raw ? `${results[0].urls.raw}&w=1920&h=1080&fit=crop&q=85` : results[0]?.urls?.full;
+    const hero = results[0]?.urls?.raw ? `${results[0].urls.raw}&w=800&h=450&fit=crop&q=60` : results[0]?.urls?.small;
     const detailPhoto = results.length > 1 ? results[1] : results[0];
     const detail = detailPhoto?.urls?.raw ? `${detailPhoto.urls.raw}&w=1600&h=900&fit=crop&q=85` : detailPhoto?.urls?.full;
     if (!hero) return null;
@@ -45,7 +45,7 @@ async function searchPexels(
     const data = await res.json();
     const photos = data.photos;
     if (!photos || photos.length < 1) return null;
-    const hero = photos[0]?.src?.original || photos[0]?.src?.large2x || photos[0]?.src?.landscape;
+    const hero = photos[0]?.src?.medium || photos[0]?.src?.landscape;
     const detailPhoto = photos.length > 1 ? photos[1] : photos[0];
     const detail = detailPhoto?.src?.original || detailPhoto?.src?.large2x || detailPhoto?.src?.landscape;
     if (!hero) return null;
