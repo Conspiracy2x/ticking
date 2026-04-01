@@ -1,11 +1,21 @@
-import { useState, useEffect } from "react";
-import { getCityImages } from "@/lib/cityImages";
+import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-export function useCityImage(cityName: string | null) {
+interface CityImageResult {
+  heroImage: string | null;
+  detailImage: string | null;
+  heroLoading: boolean;
+  detailLoading: boolean;
+  fallbackGradient: string;
+}
+
+const imageCache = new Map<string, { heroImage: string; detailImage: string }>();
+
+export function useCityImage(cityName: string | null, country?: string): CityImageResult {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [detailImage, setDetailImage] = useState<string | null>(null);
-  const [heroLoading, setHeroLoading] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!cityName) {
@@ -14,24 +24,78 @@ export function useCityImage(cityName: string | null) {
       return;
     }
 
-    const images = getCityImages(cityName);
+    const cacheKey = cityName.toLowerCase();
 
-    // Load hero image
-    setHeroLoading(true);
-    const heroImg = new Image();
-    heroImg.onload = () => { setHeroImage(heroImg.src); setHeroLoading(false); };
-    heroImg.onerror = () => { setHeroImage(null); setHeroLoading(false); };
-    heroImg.src = images.heroImage;
+    // Use cache if available
+    if (imageCache.has(cacheKey)) {
+      const cached = imageCache.get(cacheKey)!;
+      setHeroImage(cached.heroImage);
+      setDetailImage(cached.detailImage);
+      return;
+    }
 
-    // Load detail image
-    setDetailLoading(true);
-    const detailImg = new Image();
-    detailImg.onload = () => { setDetailImage(detailImg.src); setDetailLoading(false); };
-    detailImg.onerror = () => { setDetailImage(null); setDetailLoading(false); };
-    detailImg.src = images.detailImage;
-  }, [cityName]);
+    // Abort previous request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setLoading(true);
+
+    supabase.functions
+      .invoke("city-image", {
+        body: { city: cityName, country },
+      })
+      .then(({ data, error }) => {
+        if (controller.signal.aborted) return;
+
+        if (error || !data) {
+          console.error("City image fetch error:", error);
+          setHeroImage(null);
+          setDetailImage(null);
+          setLoading(false);
+          return;
+        }
+
+        // Preload hero image
+        const heroImg = new Image();
+        heroImg.onload = () => {
+          if (controller.signal.aborted) return;
+          setHeroImage(data.heroImage);
+          // Preload detail image
+          const detailImg = new Image();
+          detailImg.onload = () => {
+            if (controller.signal.aborted) return;
+            setDetailImage(data.detailImage);
+            imageCache.set(cacheKey, { heroImage: data.heroImage, detailImage: data.detailImage });
+            setLoading(false);
+          };
+          detailImg.onerror = () => {
+            if (controller.signal.aborted) return;
+            setDetailImage(data.heroImage); // fallback detail to hero
+            imageCache.set(cacheKey, { heroImage: data.heroImage, detailImage: data.heroImage });
+            setLoading(false);
+          };
+          detailImg.src = data.detailImage;
+        };
+        heroImg.onerror = () => {
+          if (controller.signal.aborted) return;
+          setHeroImage(null);
+          setDetailImage(null);
+          setLoading(false);
+        };
+        heroImg.src = data.heroImage;
+      });
+
+    return () => controller.abort();
+  }, [cityName, country]);
 
   const fallbackGradient = "linear-gradient(135deg, hsl(220, 25%, 12%), hsl(220, 30%, 25%))";
 
-  return { heroImage, detailImage, heroLoading, detailLoading, fallbackGradient };
+  return {
+    heroImage,
+    detailImage,
+    heroLoading: loading && !heroImage,
+    detailLoading: loading && !detailImage,
+    fallbackGradient,
+  };
 }
