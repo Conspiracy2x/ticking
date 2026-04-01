@@ -12,7 +12,7 @@ interface CityImageProps {
 }
 
 export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProps) {
-  const { detailImage, detailLoading, fallbackGradient } = useCityImage(city.name);
+  const { detailImage, detailLoading, fallbackGradient } = useCityImage(city.name, city.country);
   const time = getTimeForTimezone(city.timezone, use24h);
   const [imgOpacity, setImgOpacity] = useState(0);
 

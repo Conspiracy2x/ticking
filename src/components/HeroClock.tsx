@@ -11,7 +11,7 @@ interface HeroClockProps {
 
 export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   const time = getTimeForTimezone(city.timezone, use24h);
-  const { heroImage } = useCityImage(city.name);
+  const { heroImage } = useCityImage(city.name, city.country);
   const [animating, setAnimating] = useState(false);
   const prevCityRef = useRef(city.id);
 
