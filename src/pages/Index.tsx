@@ -29,7 +29,7 @@ const Index = () => {
       {/* Top Bar */}
       <header className="flex items-center justify-between px-6 md:px-10 py-4">
         <h1 className="text-sm md:text-base font-bold tracking-[0.3em] uppercase text-foreground">
-          World Time
+          Ticking
         </h1>
         <div className="flex items-center gap-1">
           <SettingsPanel
