@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { getTimeForTimezone } from "@/lib/timezones";
 import { CityData } from "@/lib/timezones";
 
@@ -9,10 +10,27 @@ interface HeroClockProps {
 
 export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   const time = getTimeForTimezone(city.timezone, use24h);
+  const [animating, setAnimating] = useState(false);
+  const prevCityRef = useRef(city.id);
+
+  useEffect(() => {
+    if (prevCityRef.current !== city.id) {
+      setAnimating(true);
+      const timeout = setTimeout(() => setAnimating(false), 50);
+      prevCityRef.current = city.id;
+      return () => clearTimeout(timeout);
+    }
+  }, [city.id]);
 
   return (
     <div className="flex flex-col items-center justify-center py-10 md:py-16 bg-[hsl(var(--clock-surface))] transition-colors duration-500">
-      <div className="flex items-end gap-2 md:gap-4">
+      <div
+        key={city.id}
+        className={`flex items-end gap-2 md:gap-4 transition-all duration-500 ease-out ${
+          animating ? "opacity-0 translate-y-3" : "opacity-100 translate-y-0"
+        }`}
+        style={{ animation: "fade-slide-in 0.5s ease-out" }}
+      >
         {/* Hours */}
         <div className="flex flex-col items-center">
           <span className="text-[10px] md:text-xs font-medium tracking-[0.25em] uppercase text-[hsl(var(--clock-label))]">

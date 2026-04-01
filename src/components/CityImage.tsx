@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { CityData, getTimeForTimezone } from "@/lib/timezones";
 import { useCityImage } from "@/hooks/useCityImage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,19 +14,45 @@ interface CityImageProps {
 export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProps) {
   const { imageUrl, loading, fallbackGradient } = useCityImage(city.name);
   const time = getTimeForTimezone(city.timezone, use24h);
+  const [imgOpacity, setImgOpacity] = useState(0);
+  const [textAnim, setTextAnim] = useState(false);
+  const prevCityRef = useRef(city.id);
+
+  // Fade in image when loaded
+  useEffect(() => {
+    if (imageUrl) {
+      setImgOpacity(0);
+      const t = setTimeout(() => setImgOpacity(1), 50);
+      return () => clearTimeout(t);
+    }
+  }, [imageUrl]);
+
+  // Animate text on city change
+  useEffect(() => {
+    if (prevCityRef.current !== city.id) {
+      setTextAnim(true);
+      const t = setTimeout(() => setTextAnim(false), 50);
+      prevCityRef.current = city.id;
+      return () => clearTimeout(t);
+    }
+  }, [city.id]);
 
   return (
-    <div className="relative w-full h-[280px] md:h-[400px] overflow-hidden transition-all duration-500">
+    <div className="relative w-full h-[280px] md:h-[400px] overflow-hidden">
       {loading ? (
         <Skeleton className="w-full h-full rounded-none" />
       ) : imageUrl ? (
         <img
           src={imageUrl}
           alt={`${city.name} skyline`}
-          className="w-full h-full object-cover transition-opacity duration-700"
+          className="w-full h-full object-cover transition-opacity duration-700 ease-out"
+          style={{ opacity: imgOpacity }}
         />
       ) : (
-        <div className="w-full h-full" style={{ background: fallbackGradient }} />
+        <div
+          className="w-full h-full transition-opacity duration-500"
+          style={{ background: fallbackGradient }}
+        />
       )}
 
       {/* Overlay */}
@@ -40,8 +67,12 @@ export function CityImage({ city, use24h, tick: _tick, onRemove }: CityImageProp
         <X className="w-4 h-4 text-white" />
       </button>
 
-      {/* City info overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 text-[hsl(var(--overlay-text))]">
+      {/* City info overlay with slide-up animation */}
+      <div
+        key={city.id}
+        className="absolute bottom-0 left-0 right-0 p-6 md:p-10 text-[hsl(var(--overlay-text))]"
+        style={{ animation: "fade-slide-in 0.6s ease-out" }}
+      >
         <h2 className="text-3xl md:text-5xl font-bold tracking-tight">{city.name}</h2>
         <p className="text-sm md:text-base font-medium opacity-80 mt-1">{city.country}</p>
         <p className="text-sm md:text-base opacity-70 mt-0.5">
