@@ -54,8 +54,8 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
         />
       )}
 
-      <div className="absolute inset-0 bg-[hsl(var(--overlay-bg)/0.28)]" />
-      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.38)]" />
+      {/* Glass overlay */}
+      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.55)] backdrop-blur-sm" />
 
       <div
         key={city.id}
