@@ -1,21 +1,41 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface CityImageResult {
-  heroImage: string | null;
-  detailImage: string | null;
-  heroLoading: boolean;
-  detailLoading: boolean;
-  fallbackGradient: string;
+interface CityImages {
+  heroImage: string;
+  detailImage: string;
 }
 
-const imageCache = new Map<string, { heroImage: string; detailImage: string }>();
+// Global cache + in-flight deduplication
+const imageCache = new Map<string, CityImages>();
+const inflight = new Map<string, Promise<CityImages | null>>();
 
-export function useCityImage(cityName: string | null, country?: string): CityImageResult {
+function fetchCityImages(city: string, country?: string): Promise<CityImages | null> {
+  const key = city.toLowerCase();
+
+  if (imageCache.has(key)) return Promise.resolve(imageCache.get(key)!);
+
+  if (inflight.has(key)) return inflight.get(key)!;
+
+  const promise = supabase.functions
+    .invoke("city-image", { body: { city, country } })
+    .then(({ data, error }) => {
+      inflight.delete(key);
+      if (error || !data?.heroImage) return null;
+      const result: CityImages = { heroImage: data.heroImage, detailImage: data.detailImage };
+      imageCache.set(key, result);
+      return result;
+    });
+
+  inflight.set(key, promise);
+  return promise;
+}
+
+export function useCityImage(cityName: string | null, country?: string) {
   const [heroImage, setHeroImage] = useState<string | null>(null);
   const [detailImage, setDetailImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const cancelRef = useRef(0);
 
   useEffect(() => {
     if (!cityName) {
@@ -24,69 +44,28 @@ export function useCityImage(cityName: string | null, country?: string): CityIma
       return;
     }
 
-    const cacheKey = cityName.toLowerCase();
+    const id = ++cancelRef.current;
+    const cached = imageCache.get(cityName.toLowerCase());
 
-    // Use cache if available
-    if (imageCache.has(cacheKey)) {
-      const cached = imageCache.get(cacheKey)!;
+    if (cached) {
       setHeroImage(cached.heroImage);
       setDetailImage(cached.detailImage);
       return;
     }
 
-    // Abort previous request
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-
     setLoading(true);
 
-    supabase.functions
-      .invoke("city-image", {
-        body: { city: cityName, country },
-      })
-      .then(({ data, error }) => {
-        if (controller.signal.aborted) return;
-
-        if (error || !data) {
-          console.error("City image fetch error:", error);
-          setHeroImage(null);
-          setDetailImage(null);
-          setLoading(false);
-          return;
-        }
-
-        // Preload hero image
-        const heroImg = new Image();
-        heroImg.onload = () => {
-          if (controller.signal.aborted) return;
-          setHeroImage(data.heroImage);
-          // Preload detail image
-          const detailImg = new Image();
-          detailImg.onload = () => {
-            if (controller.signal.aborted) return;
-            setDetailImage(data.detailImage);
-            imageCache.set(cacheKey, { heroImage: data.heroImage, detailImage: data.detailImage });
-            setLoading(false);
-          };
-          detailImg.onerror = () => {
-            if (controller.signal.aborted) return;
-            setDetailImage(data.heroImage); // fallback detail to hero
-            imageCache.set(cacheKey, { heroImage: data.heroImage, detailImage: data.heroImage });
-            setLoading(false);
-          };
-          detailImg.src = data.detailImage;
-        };
-        heroImg.onerror = () => {
-          if (controller.signal.aborted) return;
-          setHeroImage(null);
-          setDetailImage(null);
-          setLoading(false);
-        };
-        heroImg.src = data.heroImage;
-      });
-
-    return () => controller.abort();
+    fetchCityImages(cityName, country).then((result) => {
+      if (cancelRef.current !== id) return;
+      if (result) {
+        setHeroImage(result.heroImage);
+        setDetailImage(result.detailImage);
+      } else {
+        setHeroImage(null);
+        setDetailImage(null);
+      }
+      setLoading(false);
+    });
   }, [cityName, country]);
 
   const fallbackGradient = "linear-gradient(135deg, hsl(220, 25%, 12%), hsl(220, 30%, 25%))";
