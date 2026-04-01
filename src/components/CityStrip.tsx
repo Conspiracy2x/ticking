@@ -13,7 +13,7 @@ export function CityStrip({ cities, use24h, tick: _tick, onSelect, onRemove }: C
   if (cities.length === 0) return null;
 
   return (
-    <div className="relative flex gap-1.5 overflow-x-auto px-4 py-3 bg-[hsl(var(--city-strip-bg))] transition-colors duration-500 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)]">
+    <div className="relative flex gap-1 overflow-x-auto px-3 py-2 bg-[hsl(var(--city-strip-bg))] transition-colors duration-500 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.15)] md:gap-1.5 md:px-4 md:py-3">
       {/* Top gradient border */}
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-foreground/30 to-transparent" />
       {/* Bottom gradient border */}
