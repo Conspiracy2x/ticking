@@ -25,7 +25,7 @@ const Index = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-500">
+    <div className="flex min-h-screen flex-col bg-background transition-colors duration-500">
       {/* Top Bar */}
       <header className="flex items-center justify-between px-6 md:px-10 py-4">
         <h1 className="text-sm md:text-base font-bold tracking-[0.3em] uppercase text-foreground">
