@@ -31,7 +31,7 @@ export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   }, [heroImage]);
 
   return (
-    <div className="relative flex flex-col items-center justify-center overflow-hidden py-6 transition-colors duration-500 md:py-10">
+    <div className="relative flex flex-col items-center justify-center overflow-hidden py-10 transition-colors duration-500 md:py-16">
       {heroImage ? (
         <img
           key={heroImage}
