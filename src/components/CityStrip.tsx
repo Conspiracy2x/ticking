@@ -13,12 +13,12 @@ export function CityStrip({ cities, use24h, tick: _tick, onSelect, onRemove }: C
   if (cities.length === 0) return null;
 
   return (
-    <div className="flex gap-1 overflow-x-auto px-4 py-3 bg-[hsl(var(--city-strip-bg))] transition-colors duration-500">
+    <div className="flex gap-1.5 overflow-x-auto px-4 py-3 bg-[hsl(var(--city-strip-bg))] transition-colors duration-500">
       {cities.map((city) => (
         <button
           key={city.id}
           onClick={() => onSelect(city.id)}
-          className="group relative flex-shrink-0 flex flex-col items-center justify-center px-5 py-3 rounded-lg hover:bg-accent transition-colors min-w-[120px]"
+          className="group relative flex-shrink-0 flex flex-col items-center justify-center px-6 py-3 rounded-lg hover:bg-accent transition-colors min-w-[110px]"
         >
           <button
             onClick={(e) => {
@@ -30,9 +30,8 @@ export function CityStrip({ cities, use24h, tick: _tick, onSelect, onRemove }: C
           >
             <X className="w-3 h-3 text-muted-foreground" />
           </button>
-          <span className="text-xs text-muted-foreground font-medium">{city.country}</span>
           <span className="text-sm font-semibold text-foreground">{city.name}</span>
-          <span className="font-clock text-lg text-foreground tabular-nums">
+          <span className="font-clock text-lg text-foreground tabular-nums mt-0.5">
             {getShortTime(city.timezone, use24h)}
           </span>
         </button>
