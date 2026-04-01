@@ -1,55 +1,89 @@
 
+# Codebase Refactoring Plan — Ticking World Clock
 
-# World Clock Web App
+## Summary
+After reviewing all source files, I identified 7 refactoring areas ranked by significance. All changes preserve existing UI and functionality. Each step is incremental and testable independently.
 
-## Overview
-A cinematic, bold world clock app matching the reference image's hero-style design — large digital time display, city photography, and secondary timezone strip.
+---
 
-## Layout & Visual Design (matching reference)
-- **Top bar**: "WORLD TIME" logo/text (left), settings gear + add city button (right)
-- **Hero clock section**: Massive digital time display with blocky/bold font showing hours : minutes : seconds, with labels above each unit — light/off-white background
-- **Secondary cities strip**: Row of up to 5 city times below the main clock
-- **City photo section**: Full-width cinematic image of the primary city with overlay showing city name, country, day of week, and date
-- **Dark mode**: Inverted color scheme preserving the same bold feel
+## Priority 1 — HIGH IMPACT
 
-## Features
+### 1. `src/lib/cityImages.ts` — Dead Code Removal
+**Issue:** This 190-line module with curated Unsplash URLs and `getCityImages()` is **completely unused**. The app fetches images via the `city-image` edge function instead.
+**Action:** Delete the entire file.
+**Risk:** None — no imports reference it.
+**Test:** Verify build succeeds; image loading works as before.
 
-### 1. City Management
-- First city added becomes the primary (hero) clock
-- Up to 5 cities total, no duplicates
-- Click secondary city → promotes to primary with smooth transition
-- Remove any city; if primary removed, next city auto-promotes
-- Empty state with prompt to add first city
+### 2. `src/lib/timezones.ts` — Performance: Memoize Formatters
+**Issue:** `getTimeForTimezone()` creates **two new `Intl.DateTimeFormat` instances every second per city** (called on every tick). These are expensive to construct.
+**Action:** Cache formatters in a `Map<string, Intl.DateTimeFormat>` keyed by `${timezone}-${use24h}`. Reuse on subsequent calls.
+**Effect:** Eliminates ~10+ formatter constructions per second → smoother performance, especially on lower-end devices.
+**Risk:** Very low — pure optimization, same output.
+**Test:** Verify times still update correctly every second in both 12h/24h modes.
 
-### 2. Add City
-- Top-right "+" button opens a search modal/panel
-- Search input with city/country suggestions (using a built-in timezone city list from Intl API)
-- Select to add; modal closes
+### 3. `src/components/HeroClock.tsx` — Extract Repeated Digit Column
+**Issue:** The hours/minutes/seconds columns are identical JSX blocks repeated 3× (lines 67–96), differing only in label text and value. This violates DRY and makes changes error-prone.
+**Action:** Extract a `ClockDigit` subcomponent: `({ label, value })`.
+**Effect:** Reduces component from 106 → ~70 lines; one place to change digit styling.
+**Risk:** Low — purely presentational extraction.
+**Test:** Visual regression check — clock looks identical.
 
-### 3. Settings Panel
-- Gear icon opens small dropdown/panel
-- Dark/light mode toggle
-- 12h/24h format toggle
-- Settings persist in localStorage
+---
 
-### 4. Time Display
-- Real timezone data via `Intl.DateTimeFormat` with IANA timezone identifiers
-- Live update every second
-- Large blocky digital font (using a web font like "Share Tech Mono" or similar bold digital style)
+## Priority 2 — MEDIUM IMPACT
 
-### 5. City Images
-- Fetch from Unsplash Source/API for the primary city
-- Loading skeleton while fetching
-- Fallback gradient/placeholder on failure
-- Image updates on primary city change
+### 4. `src/hooks/useWorldClock.ts` — Bug Fix + Simplification of `removeCity`
+**Issue:** `removeCity` uses stale `cities` from the closure inside `setPrimaryIndex`, which can cause race conditions. Also, `primaryIndex` management is fragile — if cities array shrinks, `primaryIndex` can point out of bounds (partially guarded on line 109 but not robustly).
+**Action:** 
+- Switch to storing `primaryId: string | null` instead of `primaryIndex: number`. This eliminates all index-boundary bugs.
+- Simplify `removeCity` and `setPrimary` to work with IDs directly.
+**Effect:** Eliminates potential bugs; simpler mental model.
+**Risk:** Low — behavior stays the same, but internal representation changes.
+**Test:** Add/remove cities, switch primary, verify correct city stays primary after removals.
 
-### 6. Responsive
-- Desktop: full hero layout as in reference
-- Mobile: stacked layout, scaled-down clock, scrollable secondary cities
+### 5. `src/hooks/useCityImage.ts` — Add Error State + TTL for Cache
+**Issue:** 
+- No error state exposed — consumers can't distinguish "loading" from "failed permanently."
+- Global `imageCache` has no TTL — if an API returns a bad result once, it's cached forever until page reload.
+- `loading` state isn't reset on city change when cache misses, causing brief flicker.
+**Action:**
+- Add `error` to returned state.
+- Add a simple 30-minute TTL to cached entries.
+- Reset loading cleanly on city change.
+**Risk:** Low — additive changes.
+**Test:** Change cities rapidly; verify no stale/broken states.
 
-## Tech
-- React + TypeScript + Tailwind
-- localStorage for persisted cities and settings
-- Intl API for timezone handling
-- Unsplash for city images (free source URLs, no API key needed)
+### 6. `src/components/NavLink.tsx` — Dead Code Removal
+**Issue:** This component is **never imported** anywhere in the app.
+**Action:** Delete the file.
+**Risk:** None.
+**Test:** Build succeeds.
 
+---
+
+## Priority 3 — HOUSEKEEPING
+
+### 7. `src/index.css` — Consolidate Custom Font Classes into Tailwind Config
+**Issue:** `.font-clock`, `.font-display`, `.font-body` are defined as raw CSS classes (lines 98–108) outside the Tailwind system. They should be registered as `fontFamily` entries in `tailwind.config.ts` so they're available as proper Tailwind utilities (`font-clock`, `font-display`, `font-body`) with IntelliSense support.
+**Action:** Move font-family definitions into `tailwind.config.ts` under `theme.extend.fontFamily` and remove the manual CSS classes.
+**Effect:** Better developer experience, consistent with design system.
+**Risk:** Very low — same output classes.
+**Test:** All text renders with correct fonts.
+
+---
+
+## Execution Order
+1. Delete dead files (#1, #6) — zero risk
+2. Extract `ClockDigit` (#3) — isolated component change
+3. Memoize formatters (#2) — pure optimization
+4. Refactor primary city to ID-based (#4) — logic improvement
+5. Improve image hook (#5) — additive enhancement
+6. Move fonts to Tailwind config (#7) — housekeeping
+
+Each step gets a build verification + visual check before proceeding to the next.
+
+## Out of Scope
+- No UI or visual changes
+- No new features
+- No dependency changes
+- No edge function modifications
