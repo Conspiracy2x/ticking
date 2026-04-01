@@ -13,6 +13,11 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        clock: ["'Share Tech Mono'", "monospace"],
+        display: ["'DM Serif Display'", "serif"],
+        body: ["'DM Sans'", "sans-serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

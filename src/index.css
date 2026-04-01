@@ -95,17 +95,7 @@
   }
 }
 
-.font-clock {
-  font-family: 'Share Tech Mono', monospace;
-}
-
-.font-display {
-  font-family: 'DM Serif Display', serif;
-}
-
-.font-body {
-  font-family: 'DM Sans', sans-serif;
-}
+/* Font utilities now in tailwind.config.ts as fontFamily entries */
 
 @keyframes fade-slide-in {
   0% {
