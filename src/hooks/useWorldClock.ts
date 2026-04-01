@@ -21,30 +21,45 @@ function loadCities(): CityData[] {
 function loadSettings(): Settings {
   try {
     const stored = localStorage.getItem(SETTINGS_KEY);
-    return stored ? JSON.parse(stored) : { darkMode: false, use24h: false };
+
+    if (!stored) {
+      return { darkMode: true, use24h: false };
+    }
+
+    const parsed = JSON.parse(stored);
+
+    return {
+      darkMode: parsed.darkMode ?? true,
+      use24h: parsed.use24h ?? false,
+    };
   } catch {
-    return { darkMode: false, use24h: false };
+    return { darkMode: true, use24h: false };
   }
 }
 
 export function useWorldClock() {
   const [cities, setCities] = useState<CityData[]>(loadCities);
   const [primaryIndex, setPrimaryIndex] = useState(0);
-  const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [settings, setSettings] = useState<Settings>(() => {
+    const initialSettings = loadSettings();
+
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark", initialSettings.darkMode);
+    }
+
+    return initialSettings;
+  });
   const [tick, setTick] = useState(0);
 
-  // Live tick every second
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Persist cities
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cities));
   }, [cities]);
 
-  // Persist settings & apply dark mode
   useEffect(() => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
     document.documentElement.classList.toggle("dark", settings.darkMode);

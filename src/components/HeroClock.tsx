@@ -11,89 +11,92 @@ interface HeroClockProps {
 
 export function HeroClock({ city, use24h, tick: _tick }: HeroClockProps) {
   const time = getTimeForTimezone(city.timezone, use24h);
-  const { heroImage } = useCityImage(city.name, city.country);
+  const { heroImage, fallbackGradient } = useCityImage(city.name, city.country);
   const [animating, setAnimating] = useState(false);
+  const [imageVisible, setImageVisible] = useState(false);
   const prevCityRef = useRef(city.id);
 
   useEffect(() => {
     if (prevCityRef.current !== city.id) {
       setAnimating(true);
+      setImageVisible(false);
       const timeout = setTimeout(() => setAnimating(false), 50);
       prevCityRef.current = city.id;
       return () => clearTimeout(timeout);
     }
   }, [city.id]);
 
+  useEffect(() => {
+    setImageVisible(false);
+  }, [heroImage]);
+
   return (
-    <div className="relative flex flex-col items-center justify-center py-10 md:py-16 overflow-hidden transition-colors duration-500">
-      {/* Blurred city image background */}
-      {heroImage && (
+    <div className="relative flex flex-col items-center justify-center overflow-hidden py-10 transition-colors duration-500 md:py-16">
+      {heroImage ? (
+        <img
+          key={heroImage}
+          src={heroImage}
+          alt=""
+          aria-hidden="true"
+          loading="eager"
+          decoding="async"
+          onLoad={() => setImageVisible(true)}
+          className="pointer-events-none absolute inset-0 h-full w-full scale-125 object-cover blur-3xl transition-opacity duration-700"
+          style={{ opacity: imageVisible ? 0.42 : 0 }}
+        />
+      ) : (
         <div
-          className="absolute inset-0 transition-opacity duration-1000"
+          className="absolute inset-0"
           style={{
-            backgroundImage: `url(${heroImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            filter: "blur(50px) brightness(0.5) saturate(1.3)",
-            transform: "scale(1.3)",
-            opacity: 0.5,
+            background: fallbackGradient,
+            opacity: 0.6,
           }}
         />
       )}
-      {/* Blue tint fallback + overlay for readability */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: "linear-gradient(135deg, hsl(220, 60%, 15%), hsl(210, 50%, 25%), hsl(230, 45%, 20%))",
-          opacity: heroImage ? 0.3 : 0.4,
-        }}
-      />
-      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.7)]" />
+
+      <div className="absolute inset-0 bg-[hsl(var(--overlay-bg)/0.28)]" />
+      <div className="absolute inset-0 bg-[hsl(var(--clock-surface)/0.38)]" />
 
       <div
         key={city.id}
-        className={`relative z-10 flex items-end gap-2 md:gap-4 transition-all duration-500 ease-out ${
-          animating ? "opacity-0 translate-y-3" : "opacity-100 translate-y-0"
+        className={`relative z-10 flex items-end gap-2 transition-all duration-500 ease-out md:gap-4 ${
+          animating ? "translate-y-3 opacity-0" : "translate-y-0 opacity-100"
         }`}
         style={{ animation: "fade-slide-in 0.5s ease-out" }}
       >
-        {/* Hours */}
         <div className="flex flex-col items-center">
-          <span className="text-[10px] md:text-xs font-medium tracking-[0.25em] uppercase text-[hsl(var(--clock-label))]">
+          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
             Hours
           </span>
-          <span className="font-clock text-7xl md:text-[10rem] leading-none font-normal text-[hsl(var(--clock-digit))] tabular-nums">
+          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
             {time.hours}
           </span>
         </div>
 
-        <span className="font-clock text-5xl md:text-8xl text-[hsl(var(--clock-separator))] pb-1 md:pb-4 select-none">:</span>
+        <span className="select-none pb-1 font-clock text-5xl text-[hsl(var(--clock-separator))] md:pb-4 md:text-8xl">:</span>
 
-        {/* Minutes */}
         <div className="flex flex-col items-center">
-          <span className="text-[10px] md:text-xs font-medium tracking-[0.25em] uppercase text-[hsl(var(--clock-label))]">
+          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
             Minutes
           </span>
-          <span className="font-clock text-7xl md:text-[10rem] leading-none font-normal text-[hsl(var(--clock-digit))] tabular-nums">
+          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
             {time.minutes}
           </span>
         </div>
 
-        <span className="font-clock text-5xl md:text-8xl text-[hsl(var(--clock-separator))] pb-1 md:pb-4 select-none">:</span>
+        <span className="select-none pb-1 font-clock text-5xl text-[hsl(var(--clock-separator))] md:pb-4 md:text-8xl">:</span>
 
-        {/* Seconds */}
         <div className="flex flex-col items-center">
-          <span className="text-[10px] md:text-xs font-medium tracking-[0.25em] uppercase text-[hsl(var(--clock-label))]">
+          <span className="text-[10px] font-medium uppercase tracking-[0.25em] text-[hsl(var(--clock-label))] md:text-xs">
             Seconds
           </span>
-          <span className="font-clock text-7xl md:text-[10rem] leading-none font-normal text-[hsl(var(--clock-digit))] tabular-nums">
+          <span className="font-clock text-7xl font-normal leading-none tabular-nums text-[hsl(var(--clock-digit))] md:text-[10rem]">
             {time.seconds}
           </span>
         </div>
 
-        {/* AM/PM */}
         {time.period && (
-          <span className="font-clock text-2xl md:text-4xl text-[hsl(var(--clock-label))] pb-2 md:pb-6 ml-2">
+          <span className="ml-2 pb-2 font-clock text-2xl text-[hsl(var(--clock-label))] md:pb-6 md:text-4xl">
             {time.period}
           </span>
         )}
