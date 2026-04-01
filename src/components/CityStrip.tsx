@@ -23,7 +23,7 @@ export function CityStrip({ cities, use24h, tick: _tick, onSelect, onRemove }: C
         <button
           key={city.id}
           onClick={() => onSelect(city.id)}
-          className="group relative flex-shrink-0 flex flex-col items-center justify-center px-6 py-3 rounded-lg hover:bg-accent transition-colors min-w-[110px]"
+          className="group relative flex-shrink-0 flex flex-col items-center justify-center px-4 py-2 rounded-lg hover:bg-accent transition-colors min-w-[90px] md:px-6 md:py-3 md:min-w-[110px]"
         >
           <div
             onClick={(e) => {
