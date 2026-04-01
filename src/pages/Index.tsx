@@ -52,7 +52,7 @@ const Index = () => {
       {!primaryCity ? (
         <EmptyState onAddCity={() => setAddModalOpen(true)} />
       ) : (
-        <>
+        <div className="flex flex-1 flex-col">
           <HeroClock city={primaryCity} use24h={settings.use24h} tick={tick} />
           <CityStrip
             cities={secondaryCities}
@@ -62,7 +62,7 @@ const Index = () => {
             onRemove={removeCity}
           />
           <CityImage city={primaryCity} use24h={settings.use24h} tick={tick} onRemove={removeCity} />
-        </>
+        </div>
       )}
 
       {/* Add City Modal */}
